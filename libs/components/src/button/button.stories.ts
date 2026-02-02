@@ -153,14 +153,14 @@ export const WithIcon: Story = {
       <span class="tw-flex tw-gap-8">
         <div>
           <button type="button" bitButton [buttonType]="buttonType" [block]="block">
-            <i class="bwi bwi-plus tw-me-2"></i>
+            <i class="bwi bwi-add tw-me-2"></i>
             Button label
           </button>
         </div>
         <div>
           <button type="button" bitButton [buttonType]="buttonType" [block]="block">
             Button label
-            <i class="bwi bwi-plus tw-ms-2"></i>
+            <i class="bwi bwi-add tw-ms-2"></i>
           </button>
         </div>
       </span>

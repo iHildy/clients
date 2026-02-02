@@ -182,7 +182,7 @@ export const Buttons: Story = {
       </div>
       <div class="tw-block tw-p-2">
         <button type="button" bitLink [linkType]="linkType">
-          <i class="bwi bwi-fw bwi-plus-circle" aria-hidden="true"></i>
+          <i class="bwi bwi-fw bwi-add-circle" aria-hidden="true"></i>
           Add Icon Button
         </button>
       </div>
@@ -221,7 +221,7 @@ export const Anchors: StoryObj<AnchorLinkDirective> = {
       </div>
       <div class="tw-block tw-p-2">
         <a bitLink [linkType]="linkType" href="#">
-          <i class="bwi bwi-fw bwi-plus-circle" aria-hidden="true"></i>
+          <i class="bwi bwi-fw bwi-add-circle" aria-hidden="true"></i>
           Add Icon Anchor
         </a>
       </div>
