@@ -8,7 +8,11 @@ import { ConfigService } from "@bitwarden/common/platform/abstractions/config/co
 import { DialogService } from "@bitwarden/components";
 import { StateProvider, UserKeyDefinition, VAULT_WELCOME_DIALOG_DISK } from "@bitwarden/state";
 
-import { VaultWelcomeDialogComponent } from "../../../components/vault-welcome-dialog/vault-welcome-dialog.component";
+import { CoachmarkService } from "../../../components/coachmark";
+import {
+  VaultWelcomeDialogComponent,
+  VaultWelcomeDialogResult,
+} from "../../../components/vault-welcome-dialog/vault-welcome-dialog.component";
 
 const VAULT_WELCOME_DIALOG_ACKNOWLEDGED_KEY = new UserKeyDefinition<boolean>(
   VAULT_WELCOME_DIALOG_DISK,
@@ -30,6 +34,7 @@ export class VaultDialogOnboardingService {
     private configService: ConfigService,
     private stateProvider: StateProvider,
     private dialogService: DialogService,
+    private coachmarkService: CoachmarkService,
   ) {}
 
   async displayWelcomeDialogIfNeeded(): Promise<void> {
@@ -65,9 +70,19 @@ export class VaultDialogOnboardingService {
       return;
     }
 
-    const dialogRef = VaultWelcomeDialogComponent.open(this.dialogService);
-    await firstValueFrom(dialogRef.closed);
+    const dialogRef = VaultWelcomeDialogComponent.open(this.dialogService, {
+      data: { showTourCta: true },
+    });
+    const result = await firstValueFrom(dialogRef.closed);
 
     await this.stateProvider.setUserState(VAULT_WELCOME_DIALOG_ACKNOWLEDGED_KEY, true, account.id);
+
+    // Start the coachmark tour if user clicked the primary CTA ("Get Started")
+    if (result === VaultWelcomeDialogResult.GetStarted) {
+      // Small delay to allow the dialog to close and DOM to stabilize
+      setTimeout(() => {
+        void this.coachmarkService.startTour();
+      }, 100);
+    }
   }
 }
