@@ -13,6 +13,8 @@ export class SpotlightService implements OnDestroy {
   private scrollListener: (() => void) | null = null;
   private currentElement: HTMLElement | null = null;
   private currentPadding = 8;
+  private originalBodyOverflow = "";
+  private originalBodyPaddingRight = "";
 
   /**
    * Shows a spotlight around the specified element
@@ -28,6 +30,7 @@ export class SpotlightService implements OnDestroy {
 
     this.createSpotlightScrim();
     this.setupListeners();
+    this.lockScroll();
   }
 
   /**
@@ -36,6 +39,7 @@ export class SpotlightService implements OnDestroy {
   hide() {
     this.destroySpotlightScrim();
     this.cleanupListeners();
+    this.unlockScroll();
     this.currentElement = null;
   }
 
@@ -236,5 +240,31 @@ export class SpotlightService implements OnDestroy {
       window.removeEventListener("scroll", this.scrollListener, true);
       this.scrollListener = null;
     }
+  }
+
+  /**
+   * Locks body scroll and compensates for scrollbar width to prevent layout shift
+   */
+  private lockScroll() {
+    // Save original values
+    this.originalBodyOverflow = document.body.style.overflow;
+    this.originalBodyPaddingRight = document.body.style.paddingRight;
+
+    // Measure scrollbar width before hiding it
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    // Apply overflow hidden and compensate for scrollbar
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+  }
+
+  /**
+   * Unlocks body scroll and restores original styles
+   */
+  private unlockScroll() {
+    document.body.style.overflow = this.originalBodyOverflow;
+    document.body.style.paddingRight = this.originalBodyPaddingRight;
   }
 }

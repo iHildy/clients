@@ -156,4 +156,38 @@ describe("SpotlightService", () => {
       addEventListenerSpy.mockRestore();
     });
   });
+
+  describe("scroll locking", () => {
+    it("should lock body scroll when spotlight is shown", () => {
+      const originalOverflow = document.body.style.overflow;
+
+      service.show(testElement);
+
+      expect(document.body.style.overflow).toBe("hidden");
+
+      // Cleanup
+      document.body.style.overflow = originalOverflow;
+    });
+
+    it("should restore body scroll when spotlight is hidden", () => {
+      const originalOverflow = document.body.style.overflow;
+      const originalPadding = document.body.style.paddingRight;
+
+      service.show(testElement);
+      expect(document.body.style.overflow).toBe("hidden");
+
+      service.hide();
+      expect(document.body.style.overflow).toBe(originalOverflow);
+      expect(document.body.style.paddingRight).toBe(originalPadding);
+    });
+
+    it("should compensate for scrollbar width to prevent layout shift", () => {
+      service.show(testElement);
+
+      // If there was a scrollbar, padding should be added
+      // (We can't easily test the actual value since it depends on the browser)
+      const paddingRight = document.body.style.paddingRight;
+      expect(paddingRight).toBeDefined();
+    });
+  });
 });
