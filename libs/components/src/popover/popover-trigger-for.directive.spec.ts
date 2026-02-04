@@ -5,7 +5,6 @@ import { Subject } from "rxjs";
 
 import { PopoverTriggerForDirective } from "./popover-trigger-for.directive";
 import { PopoverComponent } from "./popover.component";
-import { SpotlightService } from "./spotlight.service";
 
 /**
  * Test component to host the directive.
@@ -77,7 +76,7 @@ describe("PopoverTriggerForDirective", () => {
 
     await TestBed.configureTestingModule({
       imports: [TestPopoverTriggerComponent],
-      providers: [{ provide: Overlay, useValue: overlay }, SpotlightService],
+      providers: [{ provide: Overlay, useValue: overlay }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestPopoverTriggerComponent);

@@ -6,7 +6,6 @@ import {
   OnDestroy,
   ViewContainerRef,
   effect,
-  inject,
   input,
   model,
 } from "@angular/core";
@@ -14,7 +13,6 @@ import { Observable, Subscription, filter, mergeWith } from "rxjs";
 
 import { defaultPositions } from "./default-positions";
 import { PopoverComponent } from "./popover.component";
-import { SpotlightService } from "./spotlight.service";
 
 /**
  * Directive that anchors a popover to any element for programmatic control.
@@ -69,7 +67,7 @@ export class PopoverAnchorDirective implements OnDestroy {
   private rafId1: number | null = null;
   private rafId2: number | null = null;
   private isDestroyed = false;
-  private spotlightService = inject(SpotlightService);
+  private spotlightCleanup: (() => void) | null = null;
 
   get positions() {
     if (!this.position()) {
@@ -88,8 +86,12 @@ export class PopoverAnchorDirective implements OnDestroy {
   get defaultPopoverConfig(): OverlayConfig {
     return {
       hasBackdrop: true,
-      backdropClass: "cdk-overlay-transparent-backdrop",
-      scrollStrategy: this.overlay.scrollStrategies.reposition(),
+      backdropClass: this.spotlight()
+        ? "bit-popover-spotlight-backdrop"
+        : "cdk-overlay-transparent-backdrop",
+      scrollStrategy: this.spotlight()
+        ? this.overlay.scrollStrategies.block()
+        : this.overlay.scrollStrategies.reposition(),
       positionStrategy: this.overlay
         .position()
         .flexibleConnectedTo(this.elementRef)
@@ -164,7 +166,7 @@ export class PopoverAnchorDirective implements OnDestroy {
     });
 
     if (this.spotlight()) {
-      this.spotlightService.show(this.elementRef.nativeElement, this.spotlightPadding());
+      this.setupSpotlight();
     }
   }
 
@@ -207,7 +209,8 @@ export class PopoverAnchorDirective implements OnDestroy {
       this.rafId2 = null;
     }
 
-    this.spotlightService.hide();
+    this.spotlightCleanup?.();
+    this.spotlightCleanup = null;
   }
 
   ngOnDestroy() {
@@ -218,5 +221,54 @@ export class PopoverAnchorDirective implements OnDestroy {
   /** Programmatically closes the popover */
   closePopover() {
     this.destroyPopover();
+  }
+
+  /**
+   * Sets up the spotlight effect with border element and listeners.
+   * Returns cleanup function stored in spotlightCleanup for later disposal.
+   */
+  private setupSpotlight() {
+    // Create border element with static styles
+    const borderElement = document.createElement("div");
+    borderElement.style.cssText = `
+      position: fixed;
+      box-shadow: 0 0 0 9999px rgba(13, 32, 86, 0.2);
+      z-index: 1001;
+      pointer-events: none;
+      transition: all 0.2s ease-out;
+    `;
+    borderElement.setAttribute("data-spotlight-border", "true");
+    document.body.appendChild(borderElement);
+
+    // Function to update border position
+    const updateBorderPosition = () => {
+      const rect = this.elementRef.nativeElement.getBoundingClientRect();
+      const padding = this.spotlightPadding();
+      const computedStyle = window.getComputedStyle(this.elementRef.nativeElement);
+
+      borderElement.style.left = `${rect.left - padding}px`;
+      borderElement.style.top = `${rect.top - padding}px`;
+      borderElement.style.width = `${rect.width + padding * 2}px`;
+      borderElement.style.height = `${rect.height + padding * 2}px`;
+      borderElement.style.borderRadius = computedStyle.borderRadius;
+    };
+
+    // Set initial position
+    updateBorderPosition();
+
+    // Set up resize observer
+    const resizeObserver = new ResizeObserver(updateBorderPosition);
+    resizeObserver.observe(this.elementRef.nativeElement);
+
+    // Set up scroll listener for nested scrollable containers
+    const scrollListener = () => updateBorderPosition();
+    window.addEventListener("scroll", scrollListener, true);
+
+    // Store cleanup function
+    this.spotlightCleanup = () => {
+      borderElement.remove();
+      resizeObserver.disconnect();
+      window.removeEventListener("scroll", scrollListener, true);
+    };
   }
 }

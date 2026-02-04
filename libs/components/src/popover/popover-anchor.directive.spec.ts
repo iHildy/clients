@@ -5,7 +5,6 @@ import { Subject } from "rxjs";
 
 import { PopoverAnchorDirective } from "./popover-anchor.directive";
 import { PopoverComponent } from "./popover.component";
-import { SpotlightService } from "./spotlight.service";
 
 /**
  * Test component to host the directive.
@@ -33,6 +32,30 @@ class TestPopoverAnchorComponent {
   readonly templateRef = viewChild("anchor", { read: TemplateRef });
 }
 
+@Component({
+  standalone: true,
+  template: `
+    <div
+      [bitPopoverAnchor]="popoverComponent"
+      [(popoverOpen)]="isOpen"
+      [spotlight]="true"
+      [spotlightPadding]="12"
+      #anchor="popoverAnchor"
+      style="position: absolute; top: 100px; left: 100px; width: 200px; height: 100px;"
+    >
+      Anchor Element with Spotlight
+    </div>
+    <bit-popover #popoverComponent></bit-popover>
+  `,
+  imports: [PopoverAnchorDirective, PopoverComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class TestPopoverAnchorWithSpotlightComponent {
+  isOpen = false;
+  readonly directive = viewChild("anchor", { read: PopoverAnchorDirective });
+  readonly popoverComponent = viewChild("popoverComponent", { read: PopoverComponent });
+}
+
 describe("PopoverAnchorDirective", () => {
   let fixture: ComponentFixture<TestPopoverAnchorComponent>;
   let component: TestPopoverAnchorComponent;
@@ -42,6 +65,13 @@ describe("PopoverAnchorDirective", () => {
   let ngZone: NgZone;
 
   beforeEach(async () => {
+    // Mock ResizeObserver for test environment
+    global.ResizeObserver = jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      disconnect: jest.fn(),
+      unobserve: jest.fn(),
+    }));
+
     // Create mock overlay ref
     overlayRef = {
       backdropElement: document.createElement("div"),
@@ -67,12 +97,13 @@ describe("PopoverAnchorDirective", () => {
       position: jest.fn().mockReturnValue(mockPositionStrategy),
       scrollStrategies: {
         reposition: jest.fn().mockReturnValue({}),
+        block: jest.fn().mockReturnValue({}),
       } as any,
     };
 
     await TestBed.configureTestingModule({
       imports: [TestPopoverAnchorComponent],
-      providers: [{ provide: Overlay, useValue: overlay }, SpotlightService],
+      providers: [{ provide: Overlay, useValue: overlay }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestPopoverAnchorComponent);
@@ -400,4 +431,145 @@ describe("PopoverAnchorDirective", () => {
       flush();
     }));
   });
+});
+
+describe("PopoverAnchorDirective with Spotlight", () => {
+  let fixture: ComponentFixture<TestPopoverAnchorWithSpotlightComponent>;
+  let component: TestPopoverAnchorWithSpotlightComponent;
+  let directive: PopoverAnchorDirective;
+  let overlayRef: Partial<OverlayRef>;
+  let overlay: Partial<Overlay>;
+  let ngZone: NgZone;
+
+  beforeEach(async () => {
+    // Mock ResizeObserver for test environment
+    global.ResizeObserver = jest.fn().mockImplementation(() => ({
+      observe: jest.fn(),
+      disconnect: jest.fn(),
+      unobserve: jest.fn(),
+    }));
+
+    // Create mock overlay ref
+    overlayRef = {
+      backdropElement: document.createElement("div"),
+      attach: jest.fn(),
+      detach: jest.fn(),
+      dispose: jest.fn(),
+      detachments: jest.fn().mockReturnValue(new Subject()),
+      keydownEvents: jest.fn().mockReturnValue(new Subject()),
+      backdropClick: jest.fn().mockReturnValue(new Subject()),
+    };
+
+    // Create mock overlay
+    const mockPositionStrategy = {
+      flexibleConnectedTo: jest.fn().mockReturnThis(),
+      withPositions: jest.fn().mockReturnThis(),
+      withLockedPosition: jest.fn().mockReturnThis(),
+      withFlexibleDimensions: jest.fn().mockReturnThis(),
+      withPush: jest.fn().mockReturnThis(),
+    };
+
+    overlay = {
+      create: jest.fn().mockReturnValue(overlayRef),
+      position: jest.fn().mockReturnValue(mockPositionStrategy),
+      scrollStrategies: {
+        reposition: jest.fn().mockReturnValue({}),
+        block: jest.fn().mockReturnValue({}),
+      } as any,
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [TestPopoverAnchorWithSpotlightComponent],
+      providers: [{ provide: Overlay, useValue: overlay }],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(TestPopoverAnchorWithSpotlightComponent);
+    component = fixture.componentInstance;
+    ngZone = TestBed.inject(NgZone);
+    fixture.detectChanges();
+    directive = component.directive()!;
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+  });
+
+  it("should use block scroll strategy when spotlight is enabled", fakeAsync(() => {
+    ngZone.run(() => {
+      directive.popoverOpen.set(true);
+      fixture.detectChanges();
+    });
+    tick(16);
+    tick(16);
+
+    expect(overlay.scrollStrategies.block).toHaveBeenCalled();
+
+    flush();
+  }));
+
+  it("should create border element when spotlight is enabled", fakeAsync(() => {
+    ngZone.run(() => {
+      directive.popoverOpen.set(true);
+      fixture.detectChanges();
+    });
+    tick(16);
+    tick(16);
+
+    const borderElement = document.querySelector('[data-spotlight-border="true"]');
+    expect(borderElement).toBeTruthy();
+    expect((borderElement as HTMLElement).style.zIndex).toBe("1001");
+
+    flush();
+  }));
+
+  it("should clean up border element when popover closes", fakeAsync(() => {
+    // Open with spotlight
+    ngZone.run(() => {
+      directive.popoverOpen.set(true);
+      fixture.detectChanges();
+    });
+    tick(16);
+    tick(16);
+
+    expect(document.querySelector('[data-spotlight-border="true"]')).toBeTruthy();
+
+    // Close
+    ngZone.run(() => {
+      directive.popoverOpen.set(false);
+      fixture.detectChanges();
+    });
+
+    expect(document.querySelector('[data-spotlight-border="true"]')).toBeFalsy();
+
+    flush();
+  }));
+
+  it("should set up resize observer when spotlight is enabled", fakeAsync(() => {
+    ngZone.run(() => {
+      directive.popoverOpen.set(true);
+      fixture.detectChanges();
+    });
+    tick(16);
+    tick(16);
+
+    expect(ResizeObserver).toHaveBeenCalled();
+
+    flush();
+  }));
+
+  it("should set up scroll listener when spotlight is enabled", fakeAsync(() => {
+    const addEventListenerSpy = jest.spyOn(window, "addEventListener");
+
+    ngZone.run(() => {
+      directive.popoverOpen.set(true);
+      fixture.detectChanges();
+    });
+    tick(16);
+    tick(16);
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith("scroll", expect.any(Function), true);
+
+    addEventListenerSpy.mockRestore();
+    flush();
+  }));
 });
