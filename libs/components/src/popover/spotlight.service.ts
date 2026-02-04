@@ -2,12 +2,12 @@ import { Injectable, OnDestroy } from "@angular/core";
 
 /**
  * Service that manages spotlight effects for guided tours.
- * Creates a dimmed overlay with a cutout around a target element,
- * blocking clicks outside the highlighted area.
+ * Creates a dimmed overlay around a target element with a visual cutout.
+ * Blocks all clicks and traps focus in the tour dialog (view-only pattern).
  */
 @Injectable({ providedIn: "root" })
 export class SpotlightService implements OnDestroy {
-  private scrimPanels: HTMLElement[] = [];
+  private backdropElement: HTMLElement | null = null;
   private borderElement: HTMLElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private scrollListener: (() => void) | null = null;
@@ -48,45 +48,26 @@ export class SpotlightService implements OnDestroy {
   }
 
   /**
-   * Creates the four scrim panels that surround the highlighted element
+   * Creates a simple full-page backdrop and border element for the spotlight effect.
+   * The backdrop blocks all clicks, while the border element with box-shadow provides
+   * the visual dimming effect with a cutout around the target element.
    */
   private createSpotlightScrim() {
     if (!this.currentElement) {
       return;
     }
 
-    const rect = this.currentElement.getBoundingClientRect();
-    const padding = this.currentPadding;
-
-    // Calculate spotlight bounds with padding
-    const spotlightTop = rect.top - padding;
-    const spotlightLeft = rect.left - padding;
-    const spotlightRight = rect.right + padding;
-    const spotlightBottom = rect.bottom + padding;
-    const spotlightHeight = rect.height + padding * 2;
-
-    // Create four panels that cover everything except the spotlight area
-    const top = this.createScrimPanel("0", "0", "100vw", `${spotlightTop}px`);
-    const right = this.createScrimPanel(
-      `${spotlightRight}px`,
-      `${spotlightTop}px`,
-      `calc(100vw - ${spotlightRight}px)`,
-      `${spotlightHeight}px`,
-    );
-    const bottom = this.createScrimPanel(
-      "0",
-      `${spotlightBottom}px`,
-      "100vw",
-      `calc(100vh - ${spotlightBottom}px)`,
-    );
-    const left = this.createScrimPanel(
-      "0",
-      `${spotlightTop}px`,
-      `${spotlightLeft}px`,
-      `${spotlightHeight}px`,
-    );
-
-    this.scrimPanels = [top, right, bottom, left];
+    // Create single full-page backdrop that blocks all clicks
+    this.backdropElement = document.createElement("div");
+    this.backdropElement.style.cssText = `
+      position: fixed;
+      inset: 0;
+      background: transparent;
+      z-index: 1000;
+      pointer-events: auto;
+    `;
+    this.backdropElement.setAttribute("data-spotlight-backdrop", "true");
+    document.body.appendChild(this.backdropElement);
 
     // Create border element that visually respects the element's border-radius
     this.createBorderElement();
@@ -95,7 +76,7 @@ export class SpotlightService implements OnDestroy {
   /**
    * Creates a visual overlay element that matches the target element's border-radius.
    * Uses box-shadow to create a dimmed effect that respects rounded corners,
-   * layered above the four blocking panels for visual polish.
+   * layered above the backdrop for visual polish.
    */
   private createBorderElement() {
     if (!this.currentElement) {
@@ -124,29 +105,6 @@ export class SpotlightService implements OnDestroy {
   }
 
   /**
-   * Creates a single scrim panel element.
-   * Panels are invisible - they only block pointer events.
-   * The visual dimming effect comes from the border element's box-shadow.
-   */
-  private createScrimPanel(left: string, top: string, width: string, height: string): HTMLElement {
-    const panel = document.createElement("div");
-    panel.style.cssText = `
-      position: fixed;
-      left: ${left};
-      top: ${top};
-      width: ${width};
-      height: ${height};
-      background: transparent;
-      z-index: 1000;
-      pointer-events: auto;
-      transition: all 0.2s ease-out;
-    `;
-    panel.setAttribute("data-spotlight-scrim", "true");
-    document.body.appendChild(panel);
-    return panel;
-  }
-
-  /**
    * Sets up resize and scroll listeners to keep spotlight positioned correctly
    */
   private setupListeners() {
@@ -168,62 +126,36 @@ export class SpotlightService implements OnDestroy {
   }
 
   /**
-   * Updates the positions of all scrim panels based on current element position
+   * Updates the border element position based on current element position.
+   * Called when the element is resized or the page is scrolled.
    */
   private updateSpotlightScrim() {
-    if (this.scrimPanels.length !== 4 || !this.currentElement) {
+    if (!this.borderElement || !this.currentElement) {
       return;
     }
 
     const rect = this.currentElement.getBoundingClientRect();
     const padding = this.currentPadding;
+    const computedStyle = window.getComputedStyle(this.currentElement);
 
     const spotlightTop = rect.top - padding;
     const spotlightLeft = rect.left - padding;
-    const spotlightRight = rect.right + padding;
-    const spotlightBottom = rect.bottom + padding;
+    const spotlightWidth = rect.width + padding * 2;
     const spotlightHeight = rect.height + padding * 2;
 
-    const [top, right, bottom, left] = this.scrimPanels;
-
-    // Update top panel
-    top.style.height = `${spotlightTop}px`;
-
-    // Update right panel
-    right.style.left = `${spotlightRight}px`;
-    right.style.top = `${spotlightTop}px`;
-    right.style.width = `calc(100vw - ${spotlightRight}px)`;
-    right.style.height = `${spotlightHeight}px`;
-
-    // Update bottom panel
-    bottom.style.top = `${spotlightBottom}px`;
-    bottom.style.height = `calc(100vh - ${spotlightBottom}px)`;
-
-    // Update left panel
-    left.style.top = `${spotlightTop}px`;
-    left.style.width = `${spotlightLeft}px`;
-    left.style.height = `${spotlightHeight}px`;
-
-    // Update border element to match current position and border-radius
-    if (this.borderElement && this.currentElement) {
-      const computedStyle = window.getComputedStyle(this.currentElement);
-      const spotlightWidth = rect.width + padding * 2;
-      this.borderElement.style.left = `${spotlightLeft}px`;
-      this.borderElement.style.top = `${spotlightTop}px`;
-      this.borderElement.style.width = `${spotlightWidth}px`;
-      this.borderElement.style.height = `${spotlightHeight}px`;
-      this.borderElement.style.borderRadius = computedStyle.borderRadius;
-    }
+    this.borderElement.style.left = `${spotlightLeft}px`;
+    this.borderElement.style.top = `${spotlightTop}px`;
+    this.borderElement.style.width = `${spotlightWidth}px`;
+    this.borderElement.style.height = `${spotlightHeight}px`;
+    this.borderElement.style.borderRadius = computedStyle.borderRadius;
   }
 
   /**
-   * Removes all scrim panels and border element from the DOM
+   * Removes backdrop and border element from the DOM
    */
   private destroySpotlightScrim() {
-    this.scrimPanels.forEach((panel) => {
-      panel.remove();
-    });
-    this.scrimPanels = [];
+    this.backdropElement?.remove();
+    this.backdropElement = null;
 
     this.borderElement?.remove();
     this.borderElement = null;

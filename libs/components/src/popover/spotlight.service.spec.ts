@@ -32,11 +32,11 @@ describe("SpotlightService", () => {
   });
 
   describe("show", () => {
-    it("should create four scrim panels", () => {
+    it("should create backdrop element", () => {
       service.show(testElement);
 
-      const panels = document.querySelectorAll('[data-spotlight-scrim="true"]');
-      expect(panels.length).toBe(4);
+      const backdrop = document.querySelector('[data-spotlight-backdrop="true"]');
+      expect(backdrop).toBeTruthy();
     });
 
     it("should create border element that respects border-radius", () => {
@@ -48,53 +48,49 @@ describe("SpotlightService", () => {
       expect((borderElement as HTMLElement).style.borderRadius).toBe("8px");
     });
 
-    it("should apply correct z-index to panels", () => {
+    it("should apply correct z-index to backdrop", () => {
       service.show(testElement);
 
-      const panels = document.querySelectorAll('[data-spotlight-scrim="true"]');
-      panels.forEach((panel) => {
-        expect((panel as HTMLElement).style.zIndex).toBe("1000");
-      });
+      const backdrop = document.querySelector('[data-spotlight-backdrop="true"]') as HTMLElement;
+      expect(backdrop.style.zIndex).toBe("1000");
     });
 
-    it("should apply pointer-events auto to block clicks", () => {
+    it("should apply pointer-events auto to backdrop to block clicks", () => {
       service.show(testElement);
 
-      const panels = document.querySelectorAll('[data-spotlight-scrim="true"]');
-      panels.forEach((panel) => {
-        expect((panel as HTMLElement).style.pointerEvents).toBe("auto");
-      });
+      const backdrop = document.querySelector('[data-spotlight-backdrop="true"]') as HTMLElement;
+      expect(backdrop.style.pointerEvents).toBe("auto");
     });
 
     it("should use custom padding when provided", () => {
       const customPadding = 20;
       service.show(testElement, customPadding);
 
-      const panels = document.querySelectorAll('[data-spotlight-scrim="true"]');
-      expect(panels.length).toBe(4);
+      const backdrop = document.querySelector('[data-spotlight-backdrop="true"]');
+      expect(backdrop).toBeTruthy();
     });
 
     it("should clean up existing spotlight before creating new one", () => {
       service.show(testElement);
-      expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(4);
+      expect(document.querySelectorAll('[data-spotlight-backdrop="true"]').length).toBe(1);
 
       const newElement = document.createElement("div");
       document.body.appendChild(newElement);
 
       service.show(newElement);
-      expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(4);
+      expect(document.querySelectorAll('[data-spotlight-backdrop="true"]').length).toBe(1);
 
       newElement.remove();
     });
   });
 
   describe("hide", () => {
-    it("should remove all scrim panels", () => {
+    it("should remove backdrop element", () => {
       service.show(testElement);
-      expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(4);
+      expect(document.querySelector('[data-spotlight-backdrop="true"]')).toBeTruthy();
 
       service.hide();
-      expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(0);
+      expect(document.querySelector('[data-spotlight-backdrop="true"]')).toBeFalsy();
     });
 
     it("should remove border element", () => {
@@ -132,10 +128,10 @@ describe("SpotlightService", () => {
   describe("ngOnDestroy", () => {
     it("should hide spotlight on destroy", () => {
       service.show(testElement);
-      expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(4);
+      expect(document.querySelector('[data-spotlight-backdrop="true"]')).toBeTruthy();
 
       service.ngOnDestroy();
-      expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(0);
+      expect(document.querySelector('[data-spotlight-backdrop="true"]')).toBeFalsy();
     });
   });
 
