@@ -576,3 +576,37 @@ export const ProgrammaticControl: Story = {
       `,
   }),
 };
+
+export const SpotlightTour: Story = {
+  render: () => ({
+    props: {
+      isOpen: false,
+      openTour() {
+        this.isOpen = true;
+      },
+    },
+    template: /*html*/ `
+      <div class="tw-h-[400px] tw-mt-44">
+        <div
+          class="tw-p-4 tw-border tw-border-solid tw-border-secondary-300 tw-rounded tw-bg-background tw-mb-4"
+          [bitPopoverAnchor]="spotlightPopover"
+          [(popoverOpen)]="isOpen"
+          [spotlight]="true"
+          #anchorRef="popoverAnchor"
+        >
+          This element is highlighted with a spotlight effect
+        </div>
+
+        <button type="button" bitButton buttonType="primary" (click)="openTour()">
+          Show Spotlight Tour
+        </button>
+      </div>
+
+      <bit-popover [title]="'Spotlight Tour'" #spotlightPopover>
+        <div>The spotlight dims everything except the highlighted element and blocks clicks outside.</div>
+        <p class="tw-mt-2 tw-mb-0">Perfect for guided tours and onboarding flows.</p>
+        <button type="button" bitButton class="tw-mt-4" (click)="anchorRef.closePopover()">Next Step</button>
+      </bit-popover>
+      `,
+  }),
+};

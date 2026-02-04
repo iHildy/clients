@@ -5,6 +5,7 @@ import { Subject } from "rxjs";
 
 import { PopoverAnchorDirective } from "./popover-anchor.directive";
 import { PopoverComponent } from "./popover.component";
+import { SpotlightService } from "./spotlight.service";
 
 /**
  * Test component to host the directive.
@@ -71,7 +72,7 @@ describe("PopoverAnchorDirective", () => {
 
     await TestBed.configureTestingModule({
       imports: [TestPopoverAnchorComponent],
-      providers: [{ provide: Overlay, useValue: overlay }],
+      providers: [{ provide: Overlay, useValue: overlay }, SpotlightService],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TestPopoverAnchorComponent);
