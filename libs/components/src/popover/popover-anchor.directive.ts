@@ -179,7 +179,7 @@ export class PopoverAnchorDirective implements OnDestroy {
     const escKey = this.overlayRef
       .keydownEvents()
       .pipe(filter((event: KeyboardEvent) => event.key === "Escape"));
-    const backdrop = this.overlayRef.backdropClick();
+    const backdrop = this.overlayRef.backdropClick().pipe(filter(() => !this.spotlight()));
     const popoverClosed = this.popover().closed;
 
     return detachments.pipe(mergeWith(escKey, backdrop, popoverClosed));
