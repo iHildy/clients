@@ -39,6 +39,15 @@ describe("SpotlightService", () => {
       expect(panels.length).toBe(4);
     });
 
+    it("should create border element that respects border-radius", () => {
+      testElement.style.borderRadius = "8px";
+      service.show(testElement);
+
+      const borderElement = document.querySelector('[data-spotlight-border="true"]');
+      expect(borderElement).toBeTruthy();
+      expect((borderElement as HTMLElement).style.borderRadius).toBe("8px");
+    });
+
     it("should apply correct z-index to panels", () => {
       service.show(testElement);
 
@@ -86,6 +95,14 @@ describe("SpotlightService", () => {
 
       service.hide();
       expect(document.querySelectorAll('[data-spotlight-scrim="true"]').length).toBe(0);
+    });
+
+    it("should remove border element", () => {
+      service.show(testElement);
+      expect(document.querySelector('[data-spotlight-border="true"]')).toBeTruthy();
+
+      service.hide();
+      expect(document.querySelector('[data-spotlight-border="true"]')).toBeFalsy();
     });
 
     it("should handle being called when no spotlight is active", () => {

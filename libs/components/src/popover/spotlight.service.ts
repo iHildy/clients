@@ -8,6 +8,7 @@ import { Injectable, OnDestroy } from "@angular/core";
 @Injectable({ providedIn: "root" })
 export class SpotlightService implements OnDestroy {
   private scrimPanels: HTMLElement[] = [];
+  private borderElement: HTMLElement | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private scrollListener: (() => void) | null = null;
   private currentElement: HTMLElement | null = null;
@@ -82,10 +83,46 @@ export class SpotlightService implements OnDestroy {
     );
 
     this.scrimPanels = [top, right, bottom, left];
+
+    // Create border element that visually respects the element's border-radius
+    this.createBorderElement();
   }
 
   /**
-   * Creates a single scrim panel element
+   * Creates a visual overlay element that matches the target element's border-radius.
+   * Uses box-shadow to create a dimmed effect that respects rounded corners,
+   * layered above the four blocking panels for visual polish.
+   */
+  private createBorderElement() {
+    if (!this.currentElement) {
+      return;
+    }
+
+    const rect = this.currentElement.getBoundingClientRect();
+    const padding = this.currentPadding;
+    const computedStyle = window.getComputedStyle(this.currentElement);
+
+    this.borderElement = document.createElement("div");
+    this.borderElement.style.cssText = `
+      position: fixed;
+      left: ${rect.left - padding}px;
+      top: ${rect.top - padding}px;
+      width: ${rect.width + padding * 2}px;
+      height: ${rect.height + padding * 2}px;
+      border-radius: ${computedStyle.borderRadius};
+      box-shadow: 0 0 0 9999px #0D205633;
+      z-index: 1001;
+      pointer-events: none;
+      transition: all 0.2s ease-out;
+    `;
+    this.borderElement.setAttribute("data-spotlight-border", "true");
+    document.body.appendChild(this.borderElement);
+  }
+
+  /**
+   * Creates a single scrim panel element.
+   * Panels are invisible - they only block pointer events.
+   * The visual dimming effect comes from the border element's box-shadow.
    */
   private createScrimPanel(left: string, top: string, width: string, height: string): HTMLElement {
     const panel = document.createElement("div");
@@ -95,7 +132,7 @@ export class SpotlightService implements OnDestroy {
       top: ${top};
       width: ${width};
       height: ${height};
-      background: #0D205633;
+      background: transparent;
       z-index: 1000;
       pointer-events: auto;
       transition: all 0.2s ease-out;
@@ -162,16 +199,30 @@ export class SpotlightService implements OnDestroy {
     left.style.top = `${spotlightTop}px`;
     left.style.width = `${spotlightLeft}px`;
     left.style.height = `${spotlightHeight}px`;
+
+    // Update border element to match current position and border-radius
+    if (this.borderElement && this.currentElement) {
+      const computedStyle = window.getComputedStyle(this.currentElement);
+      const spotlightWidth = rect.width + padding * 2;
+      this.borderElement.style.left = `${spotlightLeft}px`;
+      this.borderElement.style.top = `${spotlightTop}px`;
+      this.borderElement.style.width = `${spotlightWidth}px`;
+      this.borderElement.style.height = `${spotlightHeight}px`;
+      this.borderElement.style.borderRadius = computedStyle.borderRadius;
+    }
   }
 
   /**
-   * Removes all scrim panels from the DOM
+   * Removes all scrim panels and border element from the DOM
    */
   private destroySpotlightScrim() {
     this.scrimPanels.forEach((panel) => {
       panel.remove();
     });
     this.scrimPanels = [];
+
+    this.borderElement?.remove();
+    this.borderElement = null;
   }
 
   /**
