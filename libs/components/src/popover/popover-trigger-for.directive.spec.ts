@@ -87,7 +87,7 @@ describe("PopoverTriggerForDirective", () => {
   });
 
   afterEach(() => {
-    fixture.destroy();
+    fixture?.destroy();
   });
 
   describe("Initial popover open with RAF delay", () => {
@@ -350,8 +350,10 @@ describe("PopoverTriggerForDirective", () => {
       });
       fixture.detectChanges();
 
-      // Trigger disposal while RAF is pending
-      directive.ngOnDestroy();
+      // Manually destroy to verify RAF cleanup (afterEach will be a no-op since fixture is already destroyed)
+      const tempFixture = fixture;
+      fixture = null as any; // Prevent double-destroy in afterEach
+      tempFixture.destroy();
 
       // Should cancel animation frames
       expect(cancelAnimationFrameSpy).toHaveBeenCalled();
@@ -407,7 +409,28 @@ describe("PopoverTriggerForDirective", () => {
 
       expect(overlay.create).toHaveBeenCalledTimes(1);
 
-      // Try to open again
+      // Try to set to true again (should not create duplicate since overlay already exists)
+      ngZone.run(() => {
+        directive.popoverOpen.set(true);
+      });
+      fixture.detectChanges();
+
+      expect(overlay.create).toHaveBeenCalledTimes(1);
+
+      flush();
+    }));
+
+    it("should create new overlay when reopened after close", fakeAsync(() => {
+      ngZone.run(() => {
+        directive.popoverOpen.set(true);
+      });
+      fixture.detectChanges();
+      tick(16);
+      tick(16);
+
+      expect(overlay.create).toHaveBeenCalledTimes(1);
+
+      // Close and reopen
       ngZone.run(() => {
         directive.popoverOpen.set(false);
       });
@@ -417,7 +440,8 @@ describe("PopoverTriggerForDirective", () => {
       });
       fixture.detectChanges();
 
-      expect(overlay.create).toHaveBeenCalledTimes(1);
+      // Since we closed and reopened, should create a second overlay
+      expect(overlay.create).toHaveBeenCalledTimes(2);
 
       flush();
     }));
