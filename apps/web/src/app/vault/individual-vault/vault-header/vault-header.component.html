@@ -75,14 +75,36 @@
   </ng-container>
 
   <div *ngIf="filter.type !== 'trash'" class="tw-shrink-0">
-    <vault-new-cipher-menu
-      [canCreateCipher]="true"
-      [canCreateFolder]="true"
-      [canCreateSshKey]="true"
-      [canCreateCollection]="canCreateCollections"
-      (cipherAdded)="addCipher($event)"
-      (folderAdded)="addFolder()"
-      (collectionAdded)="addCollection()"
-    />
+    <div
+      [bitPopoverAnchor]="addItemCoachmark"
+      [popoverOpen]="addItemCoachmarkOpen()"
+      [position]="coachmarkService.getStepPosition('addItem')"
+      [spotlight]="true"
+      [spotlightPadding]="8"
+    >
+      <vault-new-cipher-menu
+        [canCreateCipher]="true"
+        [canCreateFolder]="true"
+        [canCreateSshKey]="true"
+        [canCreateCollection]="canCreateCollections"
+        (cipherAdded)="addCipher($event)"
+        (folderAdded)="addFolder()"
+        (collectionAdded)="addCollection()"
+      />
+    </div>
+    <bit-popover
+      #addItemCoachmark
+      [title]="coachmarkService.getStepTitle('addItem')"
+      (closed)="coachmarkService.completeTour()"
+    >
+      <app-coachmark
+        [description]="coachmarkService.getStepDescription('addItem')"
+        [currentStep]="coachmarkService.currentStepNumber()"
+        [totalSteps]="coachmarkService.totalSteps()"
+        [learnMoreUrl]="coachmarkService.getStepLearnMoreUrl('addItem')"
+        (back)="coachmarkService.previousStep()"
+        (next)="coachmarkService.nextStep()"
+      ></app-coachmark>
+    </bit-popover>
   </div>
 </app-header>

@@ -1,6 +1,30 @@
 <!-- eslint-disable tailwindcss/no-custom-classname -->
 <ng-container *ngIf="filters && filters.length">
-  <div *ngIf="headerInfo.showHeader" class="filter-heading">
+  <!-- Collections coachmark popover (always rendered but only shown for collections filter) -->
+  <bit-popover
+    #collectionsCoachmark
+    [title]="coachmarkService.getStepTitle('shareWithCollections')"
+    (closed)="coachmarkService.completeTour()"
+  >
+    <app-coachmark
+      [description]="coachmarkService.getStepDescription('shareWithCollections')"
+      [currentStep]="coachmarkService.currentStepNumber()"
+      [totalSteps]="coachmarkService.totalSteps()"
+      [learnMoreUrl]="coachmarkService.getStepLearnMoreUrl('shareWithCollections')"
+      (back)="coachmarkService.previousStep()"
+      (next)="coachmarkService.nextStep()"
+    ></app-coachmark>
+  </bit-popover>
+
+  <div
+    *ngIf="headerInfo.showHeader"
+    class="filter-heading"
+    [bitPopoverAnchor]="isCollectionFilter ? collectionsCoachmark : null"
+    [popoverOpen]="isCollectionFilter ? collectionsCoachmarkOpen() : false"
+    [spotlight]="isCollectionFilter"
+    [spotlightPadding]="8"
+    [position]="coachmarkService.getStepPosition('shareWithCollections')"
+  >
     <button
       type="button"
       class="toggle-button"

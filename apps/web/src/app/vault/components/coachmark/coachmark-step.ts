@@ -12,9 +12,6 @@ export interface CoachmarkStep {
   /** Description/content displayed in the coachmark popover */
   descriptionKey: string;
 
-  /** CSS selector to find the anchor element for this coachmark */
-  anchorSelector: string;
-
   /** Position of the popover relative to the anchor */
   position: "above-center" | "below-center" | "left-center" | "right-center";
 
@@ -23,12 +20,6 @@ export interface CoachmarkStep {
 
   /** Whether this step is only shown to organizational users */
   requiresOrganization?: boolean;
-
-  /**
-   * Optional CSS selector for a parent nav group that needs to be expanded
-   * before this step's anchor element is visible.
-   */
-  parentGroupSelector?: string;
 }
 
 /** All available coachmark steps in display order */
@@ -37,16 +28,13 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     id: "importData",
     titleKey: "coachmarkImportTitle",
     descriptionKey: "coachmarkImportDescription",
-    anchorSelector: 'bit-nav-item[route="tools/import"]',
     position: "right-center",
     learnMoreUrl: "https://bitwarden.com/help/import-data/",
-    parentGroupSelector: 'bit-nav-group[route="tools"]',
   },
   {
     id: "addItem",
     titleKey: "coachmarkAddItemTitle",
     descriptionKey: "coachmarkAddItemDescription",
-    anchorSelector: "#newItemDropdown",
     position: "below-center",
     learnMoreUrl: "https://bitwarden.com/help/managing-items/",
   },
@@ -54,7 +42,6 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     id: "shareWithCollections",
     titleKey: "coachmarkShareWithCollectionsTitle",
     descriptionKey: "coachmarkShareWithCollectionsDescription",
-    anchorSelector: "#collections-filters",
     position: "right-center",
     learnMoreUrl: "https://bitwarden.com/help/about-collections/",
     requiresOrganization: true,
@@ -63,7 +50,6 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     id: "monitorSecurity",
     titleKey: "coachmarkMonitorSecurityTitle",
     descriptionKey: "coachmarkMonitorSecurityDescription",
-    anchorSelector: 'bit-nav-item[route="reports"]',
     position: "right-center",
     learnMoreUrl: "https://bitwarden.com/help/reports/",
   },
