@@ -1,9 +1,9 @@
 // FIXME: Update this file to be type safe and remove this and next line
 // @ts-strict-ignore
 import { CommonModule } from "@angular/common";
-import { Component, computed, effect, inject, OnInit, Signal } from "@angular/core";
+import { Component, computed, inject, OnInit, Signal } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { Router, RouterModule } from "@angular/router";
+import { RouterModule } from "@angular/router";
 import { Observable, switchMap } from "rxjs";
 
 import { JslibModule } from "@bitwarden/angular/jslib.module";
@@ -64,8 +64,6 @@ export class UserLayoutComponent implements OnInit {
     () => this.coachmarkService.activeStepId() === "importData",
   );
 
-  private readonly router = inject(Router);
-
   constructor(
     private syncService: SyncService,
     private billingAccountProfileStateService: BillingAccountProfileStateService,
@@ -91,18 +89,6 @@ export class UserLayoutComponent implements OnInit {
     this.consolidatedSessionTimeoutComponent$ = this.configService.getFeatureFlag$(
       FeatureFlag.ConsolidatedSessionTimeoutComponent,
     );
-
-    // Navigate based on active coachmark step
-    effect(() => {
-      const activeStep = this.coachmarkService.activeStepId();
-      if (activeStep === "importData") {
-        void this.router.navigate(["/tools/import"]);
-      } else if (activeStep === "addItem") {
-        void this.router.navigate(["/vault"]);
-      } else if (activeStep === "monitorSecurity") {
-        void this.router.navigate(["/reports"]);
-      }
-    });
   }
 
   async ngOnInit() {

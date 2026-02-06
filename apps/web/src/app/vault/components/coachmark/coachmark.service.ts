@@ -1,4 +1,5 @@
 import { computed, Injectable, signal } from "@angular/core";
+import { Router } from "@angular/router";
 import { firstValueFrom } from "rxjs";
 import { map } from "rxjs/operators";
 
@@ -50,6 +51,7 @@ export class CoachmarkService {
     private organizationService: OrganizationService,
     private stateProvider: StateProvider,
     private i18nService: I18nService,
+    private router: Router,
   ) {}
 
   /**
@@ -126,7 +128,6 @@ export class CoachmarkService {
       return;
     }
 
-    // Check if tour has already been completed
     const completed = await firstValueFrom(
       this.stateProvider
         .getUserState$(COACHMARK_TOUR_COMPLETED_KEY, account.id)
@@ -137,7 +138,6 @@ export class CoachmarkService {
       return;
     }
 
-    // Determine which steps to show based on organization membership
     const hasOrganizations = await firstValueFrom(
       this.organizationService.hasOrganizations(account.id),
     );
@@ -149,7 +149,19 @@ export class CoachmarkService {
     }
 
     this.applicableSteps.set(steps);
-    this.activeStepId.set(steps[0].id);
+    await this.navigateToStep(steps[0]);
+  }
+
+  /**
+   * Navigates to the step's route and sets it as active after navigation completes.
+   */
+  private async navigateToStep(step: CoachmarkStep): Promise<void> {
+    if (step.route) {
+      await this.router.navigate([step.route]);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    this.activeStepId.set(step.id);
   }
 
   /**
@@ -166,14 +178,14 @@ export class CoachmarkService {
     if (currentIndex >= steps.length - 1) {
       await this.completeTour();
     } else {
-      this.activeStepId.set(steps[currentIndex + 1].id);
+      await this.navigateToStep(steps[currentIndex + 1]);
     }
   }
 
   /**
    * Moves to the previous step in the tour.
    */
-  previousStep(): void {
+  async previousStep(): Promise<void> {
     if (!this.isRunning()) {
       return;
     }
@@ -182,7 +194,7 @@ export class CoachmarkService {
     const currentIndex = steps.findIndex((s) => s.id === this.activeStepId());
 
     if (currentIndex > 0) {
-      this.activeStepId.set(steps[currentIndex - 1].id);
+      await this.navigateToStep(steps[currentIndex - 1]);
     }
   }
 

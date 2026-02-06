@@ -61,6 +61,9 @@ export class PopoverAnchorDirective implements OnDestroy {
   /** Padding around the spotlight cutout in pixels */
   readonly spotlightPadding = input<number>(0);
 
+  /** Border radius of the spotlight cutout in pixels */
+  readonly spotlightBorderRadius = input<number>(0);
+
   private overlayRef: OverlayRef | null = null;
   private closedEventsSub: Subscription | null = null;
   private hasInitialized = false;
@@ -68,6 +71,7 @@ export class PopoverAnchorDirective implements OnDestroy {
   private rafId2: number | null = null;
   private isDestroyed = false;
   private spotlightCleanup: (() => void) | null = null;
+  private spotlightTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   get positions() {
     if (!this.position()) {
@@ -86,9 +90,8 @@ export class PopoverAnchorDirective implements OnDestroy {
   get defaultPopoverConfig(): OverlayConfig {
     return {
       hasBackdrop: true,
-      backdropClass: this.spotlight()
-        ? "bit-popover-spotlight-backdrop"
-        : "bit-popover-dimmed-backdrop",
+      // Always use dimmed backdrop - spotlight will layer on top with its cutout
+      backdropClass: "bit-popover-dimmed-backdrop",
       scrollStrategy: this.spotlight()
         ? this.overlay.scrollStrategies.block()
         : this.overlay.scrollStrategies.reposition(),
@@ -166,10 +169,17 @@ export class PopoverAnchorDirective implements OnDestroy {
     });
 
     if (this.spotlight()) {
-      // Delay setup to ensure any scrollbars have been rendered
-      setTimeout(() => {
+      // Delay spotlight setup to ensure layout has settled (scrollbars, etc.)
+      // Dimmed backdrop shows immediately, spotlight cutout appears after delay
+      this.spotlightTimeoutId = setTimeout(() => {
+        this.spotlightTimeoutId = null;
+        if (!this.overlayRef) {
+          return;
+        }
+        // Hide the backdrop first, then setup spotlight - both use same color so no flash
+        this.overlayRef.backdropElement?.classList.add("tw-hidden");
         this.setupSpotlight();
-      }, 250);
+      }, 300);
     }
   }
 
@@ -212,6 +222,11 @@ export class PopoverAnchorDirective implements OnDestroy {
       this.rafId2 = null;
     }
 
+    if (this.spotlightTimeoutId !== null) {
+      clearTimeout(this.spotlightTimeoutId);
+      this.spotlightTimeoutId = null;
+    }
+
     this.spotlightCleanup?.();
     this.spotlightCleanup = null;
   }
@@ -231,10 +246,10 @@ export class PopoverAnchorDirective implements OnDestroy {
    * Returns cleanup function stored in spotlightCleanup for later disposal.
    */
   private setupSpotlight() {
-    // Get the overlay color from CSS variables to support light/dark themes
-    const overlayColor =
-      getComputedStyle(document.documentElement).getPropertyValue("--color-bg-overlay").trim() ||
-      "rgba(7, 11, 24, 0.3)";
+    // Use same color as the dimmed backdrop for consistency
+    const overlayColor = getComputedStyle(document.documentElement)
+      .getPropertyValue("--bit-popover-backdrop-color")
+      .trim();
 
     // Create border element with static styles
     const borderElement = document.createElement("div");
@@ -243,7 +258,6 @@ export class PopoverAnchorDirective implements OnDestroy {
       box-shadow: 0 0 0 9999px ${overlayColor};
       z-index: 1001;
       pointer-events: none;
-      transition: all 0.2s ease-out;
     `;
     borderElement.setAttribute("data-spotlight-border", "true");
     document.body.appendChild(borderElement);
@@ -252,13 +266,12 @@ export class PopoverAnchorDirective implements OnDestroy {
     const updateBorderPosition = () => {
       const rect = this.elementRef.nativeElement.getBoundingClientRect();
       const padding = this.spotlightPadding();
-      const computedStyle = window.getComputedStyle(this.elementRef.nativeElement);
 
       borderElement.style.left = `${rect.left - padding}px`;
       borderElement.style.top = `${rect.top - padding}px`;
       borderElement.style.width = `${rect.width + padding * 2}px`;
       borderElement.style.height = `${rect.height + padding * 2}px`;
-      borderElement.style.borderRadius = computedStyle.borderRadius;
+      borderElement.style.borderRadius = `${this.spotlightBorderRadius()}px`;
     };
 
     // Set up resize observer

@@ -20,6 +20,9 @@ export interface CoachmarkStep {
 
   /** Whether this step is only shown to organizational users */
   requiresOrganization?: boolean;
+
+  /** Route to navigate to before showing this step */
+  route?: string;
 }
 
 /** All available coachmark steps in display order */
@@ -30,6 +33,7 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     descriptionKey: "coachmarkImportDescription",
     position: "right-center",
     learnMoreUrl: "https://bitwarden.com/help/import-data/",
+    route: "/tools/import",
   },
   {
     id: "addItem",
@@ -37,6 +41,7 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     descriptionKey: "coachmarkAddItemDescription",
     position: "below-center",
     learnMoreUrl: "https://bitwarden.com/help/managing-items/",
+    route: "/vault",
   },
   {
     id: "shareWithCollections",
@@ -45,6 +50,7 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     position: "right-center",
     learnMoreUrl: "https://bitwarden.com/help/about-collections/",
     requiresOrganization: true,
+    route: "/vault",
   },
   {
     id: "monitorSecurity",
@@ -52,5 +58,6 @@ export const COACHMARK_STEPS: CoachmarkStep[] = [
     descriptionKey: "coachmarkMonitorSecurityDescription",
     position: "right-center",
     learnMoreUrl: "https://bitwarden.com/help/reports/",
+    route: "/reports",
   },
 ];
