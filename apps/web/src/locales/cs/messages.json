@@ -32,8 +32,14 @@
       }
     }
   },
+  "criticalBadge": {
+    "message": "Kritické"
+  },
   "accessIntelligence": {
     "message": "Přístup k inteligenci"
+  },
+  "noApplicationsMatchTheseFilters": {
+    "message": "Těmto filtrům neodpovídají žádné aplikace"
   },
   "passwordRisk": {
     "message": "Rizikové heslo"
@@ -3802,6 +3808,9 @@
   "editCollection": {
     "message": "Upravit sbírku"
   },
+  "viewCollection": {
+    "message": "Zobrazit kolekci"
+  },
   "collectionInfo": {
     "message": "Informace o sbírce"
   },
@@ -5639,10 +5648,6 @@
   "sendTypeText": {
     "message": "Text"
   },
-  "sendPasswordDescV3": {
-    "message": "Přidá volitelné heslo pro příjemce pro přístup k tomuto Send.",
-    "description": "'Send' is a noun and the name of a feature called 'Bitwarden Send'. It should not be translated."
-  },
   "createSend": {
     "message": "Nový Send",
     "description": "'Send' is a noun and the name of a feature called 'Bitwarden Send'. It should not be translated."
@@ -5661,6 +5666,26 @@
   },
   "sendCreatedDescriptionV2": {
     "message": "Zkopírujte a sdílejte tento odkaz Send. Send bude k dispozici komukoli s odkazem na dalších $TIME$.",
+    "description": "'Send' is a noun and the name of a feature called 'Bitwarden Send'. It should not be translated.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "7 days, 1 hour, 1 day"
+      }
+    }
+  },
+  "sendCreatedDescriptionPassword": {
+    "message": "Zkopírujte a sdílejte tento odkaz Send. Send bude k dispozici komukoli s odkazem a heslem na dalších $TIME$.",
+    "description": "'Send' is a noun and the name of a feature called 'Bitwarden Send'. It should not be translated.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "7 days, 1 hour, 1 day"
+      }
+    }
+  },
+  "sendCreatedDescriptionEmail": {
+    "message": "Zkopírujte a sdílejte tento Send pro odesílání. Můžou jej zobrazit osoby, které jste zadali, a to po dobu $TIME$.",
     "description": "'Send' is a noun and the name of a feature called 'Bitwarden Send'. It should not be translated.",
     "placeholders": {
       "time": {
@@ -12739,6 +12764,15 @@
   "whenYouRemoveStorage": {
     "message": "Když odeberete úložiště, obdržíte kredit, který bude automaticky převeden do Vašeho dalšího vyúčtování."
   },
+  "ownerBadgeA11yDescription": {
+    "message": "Vlastník, $OWNER$, zobrazí všechny položky ve vlastnictví $OWNER$.",
+    "placeholders": {
+      "owner": {
+        "content": "$1",
+        "example": "My Org Name"
+      }
+    }
+  },
   "youHavePremium": {
     "message": "Máte Premium"
   },
@@ -12747,5 +12781,12 @@
   },
   "invalidSendPassword": {
     "message": "Neplatné heslo k Send"
+  },
+  "sendPasswordHelperText": {
+    "message": "Pro zobrazení tohoto Send budou muset jednotlivci zadat heslo",
+    "description": "'Send' is a noun and the name of a feature called 'Bitwarden Send'. It should not be translated."
+  },
+  "perUser": {
+    "message": "za uživatele"
   }
 }
