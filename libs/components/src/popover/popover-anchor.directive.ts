@@ -88,7 +88,7 @@ export class PopoverAnchorDirective implements OnDestroy {
       hasBackdrop: true,
       backdropClass: this.spotlight()
         ? "bit-popover-spotlight-backdrop"
-        : "cdk-overlay-transparent-backdrop",
+        : "bit-popover-dimmed-backdrop",
       scrollStrategy: this.spotlight()
         ? this.overlay.scrollStrategies.block()
         : this.overlay.scrollStrategies.reposition(),
@@ -166,7 +166,10 @@ export class PopoverAnchorDirective implements OnDestroy {
     });
 
     if (this.spotlight()) {
-      this.setupSpotlight();
+      // Delay setup to ensure any scrollbars have been rendered
+      setTimeout(() => {
+        this.setupSpotlight();
+      }, 250);
     }
   }
 
@@ -228,11 +231,16 @@ export class PopoverAnchorDirective implements OnDestroy {
    * Returns cleanup function stored in spotlightCleanup for later disposal.
    */
   private setupSpotlight() {
+    // Get the overlay color from CSS variables to support light/dark themes
+    const overlayColor =
+      getComputedStyle(document.documentElement).getPropertyValue("--color-bg-overlay").trim() ||
+      "rgba(7, 11, 24, 0.3)";
+
     // Create border element with static styles
     const borderElement = document.createElement("div");
     borderElement.style.cssText = `
       position: fixed;
-      box-shadow: 0 0 0 9999px rgba(13, 32, 86, 0.2);
+      box-shadow: 0 0 0 9999px ${overlayColor};
       z-index: 1001;
       pointer-events: none;
       transition: all 0.2s ease-out;
@@ -252,9 +260,6 @@ export class PopoverAnchorDirective implements OnDestroy {
       borderElement.style.height = `${rect.height + padding * 2}px`;
       borderElement.style.borderRadius = computedStyle.borderRadius;
     };
-
-    // Set initial position
-    updateBorderPosition();
 
     // Set up resize observer
     const resizeObserver = new ResizeObserver(updateBorderPosition);
